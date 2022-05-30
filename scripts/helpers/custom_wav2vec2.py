@@ -1711,6 +1711,8 @@ class Wav2Vec2ForCTC(Wav2Vec2PreTrainedModel):
         # Initialize weights and apply final processing
         self.post_init()
 
+        self.freeze_encoder = config.freeze_encoder
+
     def freeze_feature_extractor(self):
         """
         Calling this function will disable the gradient computation for the feature encoder so that its parameter will
@@ -1731,9 +1733,11 @@ class Wav2Vec2ForCTC(Wav2Vec2PreTrainedModel):
         self.wav2vec2.feature_extractor._freeze_parameters()
 
     def unfreeze_bottleneck_adapters(self):
-        for name, param in self.wav2vec2.feature_extractor.named_parameters():
+        for name, param in self.wav2vec2.encoder.named_parameters():
             if 'bottleneck_adapter' in name:
                 param.requires_grad = True
+            elif self.freeze_encoder:
+                param.requires_grad = False
 
     @add_start_docstrings_to_model_forward(WAV_2_VEC_2_INPUTS_DOCSTRING)
     @add_code_sample_docstrings(

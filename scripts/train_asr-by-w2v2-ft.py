@@ -71,7 +71,8 @@ w2v2_config = {
     "bottleneck_adapters_kwargs" : {
         "use_bottleneck_adapter": True,
         "bottleneck_adapter_dim" : 256,
-        "bottleneck_adapter_act" : "gelu"
+        "bottleneck_adapter_act" : "gelu",
+        "freeze_encoder": True
     }
 }
 
