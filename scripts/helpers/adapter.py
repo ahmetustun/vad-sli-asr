@@ -11,8 +11,8 @@ class Adapter(nn.Module):
         self.config = config
         self.input_dim = config.hidden_size
         self.initializer_range = config.initializer_range
-        self.adapter_dim = config.adapter_dim
-        self.act_fn = ACT2FN[config.adapter_act]
+        self.adapter_dim = config.bottleneck_adapter_dim
+        self.act_fn = ACT2FN[config.bottleneck_adapter_act]
 
         self.down = nn.Linear(self.input_dim, self.adapter_dim, std=self.initializer_range)
         self.up = nn.Linear(self.adapter_dim, self.input_dim, std=self.initializer_range)

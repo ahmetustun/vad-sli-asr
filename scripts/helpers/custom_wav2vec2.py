@@ -732,8 +732,8 @@ class Wav2Vec2EncoderLayer(nn.Module):
         self.feed_forward = Wav2Vec2FeedForward(config)
         self.final_layer_norm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
 
-        self.use_adapter = config.use_adapter
-        if self.use_adapter:
+        self.use_bottleneck_adapter = config.use_bottleneck_adapter
+        if self.use_bottleneck_adapter:
             self.bottleneck_adapter_sa = Adapter(config)
             self.bottleneck_adapter_ff = Adapter(config)
 
@@ -743,11 +743,11 @@ class Wav2Vec2EncoderLayer(nn.Module):
             hidden_states, attention_mask=attention_mask, output_attentions=output_attentions
         )
         hidden_states = self.dropout(hidden_states)
-        if self.use_adapter:
+        if self.use_bottleneck_adapter:
             hidden_states = self.bottleneck_adapter_sa(hidden_states)
         hidden_states = attn_residual + hidden_states
         intermediate_states = self.layer_norm(hidden_states)
-        if self.use_adapter:
+        if self.use_bottleneck_adapter:
             hidden_states = self.feed_forward(intermediate_states)
             hidden_states = self.bottleneck_adapter_ff(hidden_states)
         hidden_states = hidden_states + intermediate_states
