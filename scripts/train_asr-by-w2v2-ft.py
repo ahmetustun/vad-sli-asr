@@ -81,7 +81,7 @@ dataset, vocab_dict = preprocess_text(dataset)
 model, processor = configure_w2v2_for_training(dataset, args, vocab_dict, w2v2_config)
 
 # Number of trainable parameters
-print(f'Trainable parameters: {sum(p.numel() for p in model.parameters())}')
+print(f'Trainable parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}')
 
 if args.lm_arpa is not None:
     processor = configure_lm(processor, args.lm_arpa, args.output_dir)
