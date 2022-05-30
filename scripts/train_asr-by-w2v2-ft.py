@@ -117,7 +117,6 @@ training_args = TrainingArguments(
     learning_rate=lr,
     # Warm up: 100 steps or 10% of total optimisation steps
     warmup_steps=min(100, int(0.1 * sel_steps * n_epochs)),
-    report_to="none",
     # 2022-03-09: manually set optmizier to PyTorch implementation torch.optim.AdamW
     # 'adamw_torch' to get rid of deprecation warning for default optimizer 'adamw_hf'
     optim="adamw_torch",
