@@ -39,8 +39,19 @@ def dataset_from_dict(dataset_dict):
     return dataset
 
 def remove_special_characters(batch):
-    chars_to_ignore_regex = '[\,\?\.\!\-\;\:\"\“\%\‘\”\�]'
+    chars_to_ignore_regex = '[\,\.\!\;\:\"\“\%\”\�136]'
     batch["sentence"] = re.sub(chars_to_ignore_regex, '', batch["sentence"])
+
+    # for ft on CGN subset
+    batch["sentence"] = re.sub('[Á]', 'A', batch["sentence"])
+    batch["sentence"] = re.sub('[Ä]', 'A', batch["sentence"])
+    batch["sentence"] = re.sub('[Å]', 'A', batch["sentence"])
+    batch["sentence"] = re.sub('[Ç]', 'C', batch["sentence"])
+    batch["sentence"] = re.sub('[Ê]', 'E', batch["sentence"])
+    batch["sentence"] = re.sub('[Ï]', 'I', batch["sentence"])
+    batch["sentence"] = re.sub('[Ô]', 'O', batch["sentence"])
+    batch["sentence"] = re.sub('[Ú]', 'U', batch["sentence"])
+    batch["sentence"] = re.sub('[Ü]', 'U', batch["sentence"])
     
     return batch
 
