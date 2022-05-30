@@ -24,10 +24,9 @@ from transformers import (
     Wav2Vec2Processor,
     Wav2Vec2ProcessorWithLM
 )
-from custom_hg.modeling_wav2vec2 import (
-    Wav2Vec2FeatureExtractor,
-    Wav2Vec2ForCTC,
-)
+
+from .custom_wav2vec import Wav2Vec2ForCTC, Wav2Vec2FeatureExtractor
+
 
 def dataset_from_dict(dataset_dict):
 
