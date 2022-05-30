@@ -1284,11 +1284,6 @@ class Wav2Vec2Model(Wav2Vec2PreTrainedModel):
         """
         self.feature_extractor._freeze_parameters()
 
-    def unfreeze_bottleneck_adapters(self):
-        for name, param in self.named_parameters():
-            if 'bottleneck_adapter' in name:
-                param.requires_grad = True
-
     def _mask_hidden_states(
         self,
         hidden_states: torch.FloatTensor,
@@ -1734,6 +1729,11 @@ class Wav2Vec2ForCTC(Wav2Vec2PreTrainedModel):
         not be updated during training.
         """
         self.wav2vec2.feature_extractor._freeze_parameters()
+
+    def unfreeze_bottleneck_adapters(self):
+        for name, param in self.wav2vec2.feature_extractor.named_parameters():
+            if 'bottleneck_adapter' in name:
+                param.requires_grad = True
 
     @add_start_docstrings_to_model_forward(WAV_2_VEC_2_INPUTS_DOCSTRING)
     @add_code_sample_docstrings(
