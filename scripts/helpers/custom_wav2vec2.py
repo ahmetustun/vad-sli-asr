@@ -492,11 +492,6 @@ class Wav2Vec2FeatureEncoder(nn.Module):
             param.requires_grad = False
         self._requires_grad = False
 
-    def unfreeze_bottleneck_adapters(self):
-        for name, param in self.named_parameters():
-            if 'bottleneck_adapter' in name:
-                param.requires_grad = True
-
     def forward(self, input_values):
         hidden_states = input_values[:, None]
 
@@ -1288,6 +1283,11 @@ class Wav2Vec2Model(Wav2Vec2PreTrainedModel):
         not be updated during training.
         """
         self.feature_extractor._freeze_parameters()
+
+    def unfreeze_bottleneck_adapters(self):
+        for name, param in self.named_parameters():
+            if 'bottleneck_adapter' in name:
+                param.requires_grad = True
 
     def _mask_hidden_states(
         self,
