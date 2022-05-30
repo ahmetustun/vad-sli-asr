@@ -673,8 +673,8 @@ class Wav2Vec2EncoderLayer(nn.Module):
 
         self.use_adapter = config.use_adapter
         if self.use_adapter:
-            self.bottleneck_adapter_A = Adapter(config)
-            self.bottleneck_adapter_B = Adapter(config)
+            self.bottleneck_adapter_sa = Adapter(config)
+            self.bottleneck_adapter_ff = Adapter(config)
 
     def forward(self, hidden_states, attention_mask=None, output_attentions=False):
         attn_residual = hidden_states
@@ -683,12 +683,12 @@ class Wav2Vec2EncoderLayer(nn.Module):
         )
         hidden_states = self.dropout(hidden_states)
         if self.use_adapter:
-            hidden_states = self.bottleneck_adapter_A(hidden_states)
+            hidden_states = self.bottleneck_adapter_sa(hidden_states)
         hidden_states = attn_residual + hidden_states
         intermediate_states = self.layer_norm(hidden_states)
         if self.use_adapter:
             hidden_states = self.feed_forward(intermediate_states)
-            hidden_states = self.bottleneck_adapter_B(hidden_states)
+            hidden_states = self.bottleneck_adapter_ff(hidden_states)
         hidden_states = hidden_states + intermediate_states
         hidden_states = self.final_layer_norm(hidden_states)
 

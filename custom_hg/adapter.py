@@ -22,4 +22,4 @@ class Adapter(nn.Module):
         z = self.down(x)
         z = self.act_fn(z)
         z = self.up(z)
-        return self.layernorm(z)
+        return self.layernorm(z) + x
