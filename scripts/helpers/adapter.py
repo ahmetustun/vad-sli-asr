@@ -14,12 +14,20 @@ class Adapter(nn.Module):
         self.adapter_dim = config.bottleneck_adapter_dim
         self.act_fn = ACT2FN[config.bottleneck_adapter_act]
 
-        self.down = nn.Linear(self.input_dim, self.adapter_dim, std=self.initializer_range)
-        self.up = nn.Linear(self.adapter_dim, self.input_dim, std=self.initializer_range)
+        self.down = nn.Linear(self.input_dim, self.adapter_dim)
+        self.up = nn.Linear(self.adapter_dim, self.input_dim)
         self.layernorm = nn.LayerNorm(config.input_dim)
+
+        self.init_linear_layer(self.down, std=self.initializer_range)
+        self.init_linear_layer(self.up, std=self.initializer_range)
 
     def forward(self, x):
         z = self.down(x)
         z = self.act_fn(z)
         z = self.up(z)
         return self.layernorm(z) + x
+
+    def init_linear_layer(self, linear_layer, std=1e-2):
+        """Initializes the given linear module as explained in adapter paper."""
+        nn.init.normal_(linear_layer.weight, std=std)
+        nn.init.zeros_(linear_layer.bias)
