@@ -99,6 +99,9 @@ eps_b_eval = 5
 # Save/Eval/Logging steps
 sel_steps  = int(math.ceil(len(dataset['train']) / batch_size) * eps_b_eval)
 
+# Learning rate
+lr = 1e-4
+
 training_args = TrainingArguments(
     output_dir=args.output_dir,
     group_by_length=True,
@@ -107,11 +110,11 @@ training_args = TrainingArguments(
     evaluation_strategy="steps",
     num_train_epochs=n_epochs,
     fp16=True if torch.cuda.is_available() else False,
-    seed=7135,
+    seed=4892,
     save_steps=sel_steps,
     eval_steps=sel_steps,
     logging_steps=sel_steps,
-    learning_rate=1e-4,
+    learning_rate=lr,
     # Warm up: 100 steps or 10% of total optimisation steps
     warmup_steps=min(100, int(0.1 * sel_steps * n_epochs)),
     report_to="none",
@@ -119,10 +122,13 @@ training_args = TrainingArguments(
     # 'adamw_torch' to get rid of deprecation warning for default optimizer 'adamw_hf'
     optim="adamw_torch",
     metric_for_best_model="wer",
-    save_total_limit=5,
+    save_total_limit=2,
     load_best_model_at_end = True,
     # Lower WER is better
-    greater_is_better=False
+    greater_is_better=False,
+    dataloader_num_workers=4,
+    report_to = 'wandb',
+    run_name = args.repo_path_or_name.split('/')[-1] + '-' + str(lr)
 )
 
 trainer = Trainer(
