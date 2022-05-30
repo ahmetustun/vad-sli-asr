@@ -16,7 +16,7 @@ class Adapter(nn.Module):
 
         self.down = nn.Linear(self.input_dim, self.adapter_dim)
         self.up = nn.Linear(self.adapter_dim, self.input_dim)
-        self.layernorm = nn.LayerNorm(config.input_dim)
+        self.layernorm = nn.LayerNorm(self.input_dim)
 
         self.init_linear_layer(self.down, std=self.initializer_range)
         self.init_linear_layer(self.up, std=self.initializer_range)
