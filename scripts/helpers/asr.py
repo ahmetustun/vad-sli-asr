@@ -175,6 +175,10 @@ def configure_w2v2_for_training(dataset, args, vocab_dict, w2v2_config={}):
 
     feature_extractor_kwargs = w2v2_config["feature_extractor"] if "feature_extractor" in w2v2_config.keys() else {}
     model_kwargs = w2v2_config["model_kwargs"] if "model_kwargs" in w2v2_config.keys() else {}
+    bottleneck_adapters_kwargs = w2v2_config["bottleneck_adapters_kwargs"] \
+        if "bottleneck_adapters_kwargs" in w2v2_config.keys() else {}
+
+    model_kwargs.update(bottleneck_adapters_kwargs)
 
     if args.use_target_vocab is True:
         vocab_path = os.path.join(args.output_dir, 'vocab.json')
@@ -216,6 +220,7 @@ def configure_w2v2_for_training(dataset, args, vocab_dict, w2v2_config={}):
         )
 
     model.freeze_feature_encoder()
+    model.unfreeze_bottleneck_adapters()
 
     return model, processor
 

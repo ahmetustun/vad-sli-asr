@@ -67,12 +67,19 @@ w2v2_config = {
         "mask_time_prob" : 0,
         "gradient_checkpointing" : True,
         "ctc_loss_reduction" : "mean"
+    },
+    "bottleneck_adapters_kwargs" : {
+        "adapter_dim" : 256,
+        "adapter_act" : "gelu"
     }
 }
 
 dataset, vocab_dict = preprocess_text(dataset)
 
 model, processor = configure_w2v2_for_training(dataset, args, vocab_dict, w2v2_config)
+
+# Number of trainable parameters
+print(f'Trainable parameters: {sum(p.numel() for p in model.parameters())}')
 
 if args.lm_arpa is not None:
     processor = configure_lm(processor, args.lm_arpa, args.output_dir)
