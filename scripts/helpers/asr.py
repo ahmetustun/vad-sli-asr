@@ -21,10 +21,12 @@ from transformers import (
     AutoConfig,
     AutoProcessor,
     Wav2Vec2CTCTokenizer,
-    Wav2Vec2FeatureExtractor,
-    Wav2Vec2ForCTC,
     Wav2Vec2Processor,
     Wav2Vec2ProcessorWithLM
+)
+from custom_hg.modeling_wav2vec2 import (
+    Wav2Vec2FeatureExtractor,
+    Wav2Vec2ForCTC,
 )
 
 def dataset_from_dict(dataset_dict):
