@@ -45,7 +45,7 @@ from transformers.modeling_outputs import (
 from transformers.modeling_utils import PreTrainedModel
 from transformers.pytorch_utils import torch_int_div
 from transformers.utils import logging
-from transformers.models.wav2vec2.configuration_wav2vec2 import Wav2Vec2Config
+from .custom_wav2vec2_configuration import Wav2Vec2Config
 
 
 logger = logging.get_logger(__name__)

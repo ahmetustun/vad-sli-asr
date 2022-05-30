@@ -69,9 +69,9 @@ w2v2_config = {
         "ctc_loss_reduction" : "mean"
     },
     "bottleneck_adapters_kwargs" : {
-        "use_adapter": True,
-        "adapter_dim" : 256,
-        "adapter_act" : "gelu"
+        "use_bottleneck_adapter": True,
+        "bottleneck_adapter_dim" : 256,
+        "bottleneck_adapter_act" : "gelu"
     }
 }
 
