@@ -25,7 +25,8 @@ from transformers import (
     Wav2Vec2ProcessorWithLM
 )
 
-from .custom_wav2vec import Wav2Vec2ForCTC, Wav2Vec2FeatureExtractor
+from .custom_wav2vec import Wav2Vec2ForCTC
+from transformers.models.wav2vec2.feature_extraction_wav2vec2 import Wav2Vec2FeatureExtractor
 
 
 def dataset_from_dict(dataset_dict):
