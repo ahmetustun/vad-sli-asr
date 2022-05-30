@@ -81,7 +81,9 @@ dataset, vocab_dict = preprocess_text(dataset)
 model, processor = configure_w2v2_for_training(dataset, args, vocab_dict, w2v2_config)
 
 # Number of trainable parameters
-print(f'Trainable parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}')
+print(f'Total model parameters: {sum(p.numel() for p in model.parameters())}')
+print(f'Trainable model parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}')
+print(f'Trainable adapter parameters: {sum(p.numel() for n,p in model.named_parameters() if "bottleneck_adapter" in n)}')
 
 if args.lm_arpa is not None:
     processor = configure_lm(processor, args.lm_arpa, args.output_dir)
