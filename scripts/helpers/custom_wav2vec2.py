@@ -742,8 +742,9 @@ class Wav2Vec2EncoderLayer(nn.Module):
             hidden_states = self.bottleneck_adapter_sa(hidden_states)
         hidden_states = attn_residual + hidden_states
         intermediate_states = self.layer_norm(hidden_states)
+
+        hidden_states = self.feed_forward(intermediate_states)
         if self.use_bottleneck_adapter:
-            hidden_states = self.feed_forward(intermediate_states)
             hidden_states = self.bottleneck_adapter_ff(hidden_states)
         hidden_states = hidden_states + intermediate_states
         hidden_states = self.final_layer_norm(hidden_states)
@@ -1711,6 +1712,7 @@ class Wav2Vec2ForCTC(Wav2Vec2PreTrainedModel):
         # Initialize weights and apply final processing
         self.post_init()
 
+        self.use_bottleneck_adapter = config.use_bottleneck_adapter
         self.freeze_encoder = config.freeze_encoder
 
     def freeze_feature_extractor(self):
@@ -1733,11 +1735,12 @@ class Wav2Vec2ForCTC(Wav2Vec2PreTrainedModel):
         self.wav2vec2.feature_extractor._freeze_parameters()
 
     def unfreeze_bottleneck_adapters(self):
-        for name, param in self.wav2vec2.encoder.named_parameters():
-            if 'bottleneck_adapter' in name:
-                param.requires_grad = True
-            elif self.freeze_encoder:
-                param.requires_grad = False
+        if self.use_bottleneck_adapter:
+            for name, param in self.wav2vec2.encoder.named_parameters():
+                if 'bottleneck_adapter' in name:
+                    param.requires_grad = True
+                elif self.freeze_encoder:
+                    param.requires_grad = False
 
     @add_start_docstrings_to_model_forward(WAV_2_VEC_2_INPUTS_DOCSTRING)
     @add_code_sample_docstrings(
