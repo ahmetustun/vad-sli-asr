@@ -72,6 +72,7 @@ w2v2_config = {
         "use_bottleneck_adapter": True,
         "bottleneck_adapter_dim" : 256,
         "bottleneck_adapter_act" : "gelu",
+        "unfreeze_layernorm" : True,
         "freeze_encoder": True
     }
 }
