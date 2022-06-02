@@ -16,18 +16,21 @@ class Adapter(nn.Module):
 
         self.down = nn.Linear(self.input_dim, self.adapter_dim)
         self.up = nn.Linear(self.adapter_dim, self.input_dim)
-        self.layernorm = nn.LayerNorm(self.input_dim, eps=self.config.layer_norm_eps)
+        self.layer_norm = nn.LayerNorm(self.input_dim, eps=self.config.layer_norm_eps)
 
-        self.init_linear_layer(self.down, std=self.initializer_range)
-        self.init_linear_layer(self.up, std=self.initializer_range)
+        self.init_linear_layer(self.down)
+        self.init_linear_layer(self.up)
 
     def forward(self, x):
         z = self.down(x)
         z = self.act_fn(z)
         z = self.up(z)
-        return self.layernorm(z) + x
+        z = x + self.layer_norm(z)
+        return z
 
-    def init_linear_layer(self, linear_layer, std=1e-2):
+    def init_linear_layer(self, linear_layer):
         """Initializes the given linear module as explained in adapter paper."""
-        nn.init.normal_(linear_layer.weight, std=std)
-        nn.init.zeros_(linear_layer.bias)
+        almost_zero = 1e-5
+        delta = 1e-6
+        nn.init.uniform_(linear_layer.weight, almost_zero - delta, almost_zero + delta)
+        nn.init.uniform_(linear_layer.bias, almost_zero - delta, almost_zero + delta)
