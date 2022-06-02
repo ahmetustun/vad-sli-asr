@@ -71,7 +71,7 @@ def create_vocab(dataset_dict, word_delimiter_token = "|", special_tokens = ["<s
         vocab_list.extend(vocab["vocab"][0])
 
     vocab_list = list(set(vocab_list))
-    vocab_dict = { v: k for k, v in enumerate(vocab_list) }
+    vocab_dict = { v: k for k, v in enumerate(sorted(vocab_list)) }
 
     vocab_dict[word_delimiter_token] = vocab_dict[" "]
     del vocab_dict[" "]
