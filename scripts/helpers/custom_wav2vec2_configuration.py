@@ -257,6 +257,7 @@ class Wav2Vec2Config(PretrainedConfig):
         bottleneck_adapter_dim=None,
         bottleneck_adapter_act="gelu",
         freeze_encoder=False,
+        unfreeze_layernorm=True,
         **kwargs
     ):
         super().__init__(**kwargs, pad_token_id=pad_token_id, bos_token_id=bos_token_id, eos_token_id=eos_token_id)
@@ -290,6 +291,7 @@ class Wav2Vec2Config(PretrainedConfig):
         self.bottleneck_adapter_dim = bottleneck_adapter_dim
         self.bottleneck_adapter_act = bottleneck_adapter_act
         self.freeze_encoder = freeze_encoder
+        self.unfreeze_layernorm = unfreeze_layernorm
 
         if (
             (len(self.conv_stride) != self.num_feat_extract_layers)

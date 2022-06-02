@@ -1713,6 +1713,7 @@ class Wav2Vec2ForCTC(Wav2Vec2PreTrainedModel):
         self.post_init()
 
         self.use_bottleneck_adapter = config.use_bottleneck_adapter
+        self.unfreeze_layernorm = config.unfreeze_layernorm
         self.freeze_encoder = config.freeze_encoder
 
     def freeze_feature_extractor(self):
@@ -1738,6 +1739,8 @@ class Wav2Vec2ForCTC(Wav2Vec2PreTrainedModel):
         if self.use_bottleneck_adapter:
             for name, param in self.wav2vec2.encoder.named_parameters():
                 if 'bottleneck_adapter' in name:
+                    param.requires_grad = True
+                elif self.unfreeze_layernorm and 'layer_norm' in name:
                     param.requires_grad = True
                 elif self.freeze_encoder:
                     param.requires_grad = False
