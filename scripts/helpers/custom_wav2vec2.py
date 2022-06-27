@@ -1423,7 +1423,7 @@ class Wav2Vec2ForPreTraining(Wav2Vec2PreTrainedModel):
         # bottleneck adapter configs
         self.use_bottleneck_adapter = config.use_bottleneck_adapter
         self.unfreeze_layernorm = config.unfreeze_layernorm
-        self.freeze_encoder = config.freeze_encoder
+        self.unfreeze_encoder = config.unfreeze_encoder
 
     def set_gumbel_temperature(self, temperature: int):
         """
@@ -1740,7 +1740,7 @@ class Wav2Vec2ForCTC(Wav2Vec2PreTrainedModel):
 
         self.use_bottleneck_adapter = config.use_bottleneck_adapter
         self.unfreeze_layernorm = config.unfreeze_layernorm
-        self.freeze_encoder = config.freeze_encoder
+        self.unfreeze_encoder = config.unfreeze_encoder
 
     def freeze_feature_extractor(self):
         """
