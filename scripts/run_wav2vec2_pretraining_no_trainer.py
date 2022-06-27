@@ -788,6 +788,7 @@ def main():
             if is_wandb_available():
                 wandb.log(val_logs)
 
+        '''
         if args.output_dir is not None:
             accelerator.wait_for_everyone()
             unwrapped_model = accelerator.unwrap_model(model)
@@ -795,6 +796,7 @@ def main():
             if accelerator.is_main_process:
                 if args.push_to_hub:
                     repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
+        '''
 
 
 if __name__ == "__main__":
