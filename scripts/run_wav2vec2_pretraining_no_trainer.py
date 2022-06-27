@@ -268,6 +268,12 @@ def parse_args():
         default="gelu",
         help="ACtivation function for bottleneck adapters",
     )
+    parser.add_argument(
+        "--freeze_feature_encoder",
+        action="store_true",
+        default=False,
+        help="Freeze feature encoder during training",
+    )
 
     parser.add_argument("--push_to_hub", action="store_true", help="Whether or not to push the model to the Hub.")
     parser.add_argument(
@@ -540,7 +546,10 @@ def main():
     # initialize random model
     model = Wav2Vec2ForPreTraining.from_pretrained(args.model_name_or_path, **bottleneck_adapters_kwargs)
 
-    model.unfreeze_bottleneck_adapters()
+    if args.freeze_feature_encoder:
+        model.freeze_feature_encoder()
+    if args.use_bottleneck_adapter:
+        model.unfreeze_bottleneck_adapters()
 
     # Number of trainable parameters
     print(f'Total model parameters: {sum(p.numel() for p in model.parameters())}')
