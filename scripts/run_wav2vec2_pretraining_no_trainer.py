@@ -736,10 +736,10 @@ def main():
                     if len(os.listdir(args.output_dir)) >= args.save_total_limit:
                         file_name_to_remove = ckpt_prefix + str(sorted([int(i.replace(ckpt_prefix, ''))
                                                                           for i in os.listdir(args.output_dir)])[0])
-                        os.remove(args.output_dir, file_name_to_remove)
+                        os.remove(os.path.join(args.output_dir, file_name_to_remove))
                     unwrapped_model = accelerator.unwrap_model(model)
-                    os.makedirs(os.path(args.output_dir, ckpt_prefix+str(step + 1)), exist_ok=False)
-                    unwrapped_model.save_pretrained(os.path(args.output_dir, ckpt_prefix+str(step + 1)),
+                    os.makedirs(os.path.join(args.output_dir, ckpt_prefix+str(step + 1)), exist_ok=False)
+                    unwrapped_model.save_pretrained(os.path.join(args.output_dir, ckpt_prefix+str(step + 1)),
                                                     save_function=accelerator.save)
 
                 if (args.push_to_hub and epoch < args.num_train_epochs - 1) and accelerator.is_main_process:
