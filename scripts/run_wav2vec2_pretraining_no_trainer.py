@@ -42,8 +42,8 @@ from transformers import (
 from transformers.file_utils import get_full_repo_name
 from transformers.models.wav2vec2.modeling_wav2vec2 import _compute_mask_indices, _sample_negative_indices
 
-from scripts.helpers.custom_wav2vec2 import Wav2Vec2ForPreTraining, Wav2Vec2FeatureExtractor
-from scripts.helpers.custom_wav2vec2_configuration import Wav2Vec2Config
+from helpers.custom_wav2vec2 import Wav2Vec2ForPreTraining, Wav2Vec2FeatureExtractor
+from helpers.custom_wav2vec2_configuration import Wav2Vec2Config
 
 logger = logging.getLogger(__name__)
 
