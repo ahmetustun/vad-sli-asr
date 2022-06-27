@@ -530,14 +530,15 @@ def main():
             "PreTraining is only supported for ``config.do_stable_layer_norm=True`` and ``config.feat_extract_norm='layer'"
         )
 
-    config.use_bottleneck_adapter = args.use_bottleneck_adapter
-    config.bottleneck_adapter_dim = args.bottleneck_adapter_dim
-    config.bottleneck_adapter_act = args.bottleneck_adapter_act
-    config.unfreeze_encoder = args.unfreeze_encoder
-    config.unfreeze_layernorm = args.unfreeze_layernorm
+    bottleneck_adapters_kwargs = dict()
+    bottleneck_adapters_kwargs['use_bottleneck_adapter'] = args.use_bottleneck_adapter
+    bottleneck_adapters_kwargs['bottleneck_adapter_dim'] = args.bottleneck_adapter_dim
+    bottleneck_adapters_kwargs['bottleneck_adapter_act'] = args.bottleneck_adapter_act
+    bottleneck_adapters_kwargs['unfreeze_encoder'] = args.unfreeze_encoder
+    bottleneck_adapters_kwargs['unfreeze_layernorm'] = args.unfreeze_layernorm
 
     # initialize random model
-    model = Wav2Vec2ForPreTraining(config)
+    model = Wav2Vec2ForPreTraining.from_pretrained(args.model_name_or_path, **bottleneck_adapters_kwargs)
 
     model.unfreeze_bottleneck_adapters()
 
