@@ -542,6 +542,12 @@ def main():
 
     model.unfreeze_bottleneck_adapters()
 
+    # Number of trainable parameters
+    print(f'Total model parameters: {sum(p.numel() for p in model.parameters())}')
+    print(f'Trainable model parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}')
+    print(f'Trainable adapter parameters: '
+          f'{sum(p.numel() for n, p in model.named_parameters() if "bottleneck_adapter" in n)}')
+
     # Activate gradient checkpointing if needed
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
