@@ -1420,6 +1420,11 @@ class Wav2Vec2ForPreTraining(Wav2Vec2PreTrainedModel):
         self.project_hid = nn.Linear(config.hidden_size, config.proj_codevector_dim)
         self.project_q = nn.Linear(config.codevector_dim, config.proj_codevector_dim)
 
+        # bottleneck adapter configs
+        self.use_bottleneck_adapter = config.use_bottleneck_adapter
+        self.unfreeze_layernorm = config.unfreeze_layernorm
+        self.freeze_encoder = config.freeze_encoder
+
     def set_gumbel_temperature(self, temperature: int):
         """
         Set the Gumbel softmax temperature to a given value. Only necessary for training
@@ -1444,6 +1449,16 @@ class Wav2Vec2ForPreTraining(Wav2Vec2PreTrainedModel):
         not be updated during training.
         """
         self.wav2vec2.feature_extractor._freeze_parameters()
+
+    def unfreeze_bottleneck_adapters(self):
+        if self.use_bottleneck_adapter:
+            for name, param in self.wav2vec2.encoder.named_parameters():
+                if 'bottleneck_adapter' in name:
+                    param.requires_grad = True
+                elif self.unfreeze_layernorm and 'layer_norm' in name:
+                    param.requires_grad = True
+                elif not self.unfreeze_encoder:
+                    param.requires_grad = False
 
     @staticmethod
     def compute_contrastive_logits(
