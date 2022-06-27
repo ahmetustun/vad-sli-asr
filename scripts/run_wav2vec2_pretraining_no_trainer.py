@@ -274,6 +274,11 @@ def parse_args():
         default=False,
         help="Freeze feature encoder during training",
     )
+    parser.add_argument(
+        "--mask_time_prob",
+        type=float,
+        default=0.5,
+    )
 
     parser.add_argument("--push_to_hub", action="store_true", help="Whether or not to push the model to the Hub.")
     parser.add_argument(
@@ -542,6 +547,9 @@ def main():
     bottleneck_adapters_kwargs['bottleneck_adapter_act'] = args.bottleneck_adapter_act
     bottleneck_adapters_kwargs['unfreeze_encoder'] = args.unfreeze_encoder
     bottleneck_adapters_kwargs['unfreeze_layernorm'] = args.unfreeze_layernorm
+
+    # additional mask_time_prob
+    bottleneck_adapters_kwargs['mask_time_prob'] = args.mask_time_prob
 
     # initialize random model
     model = Wav2Vec2ForPreTraining.from_pretrained(args.model_name_or_path, **bottleneck_adapters_kwargs)
