@@ -1753,7 +1753,7 @@ class Wav2Vec2ForCTC(Wav2Vec2PreTrainedModel):
                     param.requires_grad = True
                 elif self.unfreeze_layernorm and 'layer_norm' in name:
                     param.requires_grad = True
-                elif self.freeze_encoder:
+                elif not self.unfreeze_encoder:
                     param.requires_grad = False
 
     @add_start_docstrings_to_model_forward(WAV_2_VEC_2_INPUTS_DOCSTRING)
