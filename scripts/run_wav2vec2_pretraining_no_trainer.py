@@ -19,6 +19,7 @@ import argparse
 import logging
 import math
 import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -736,7 +737,7 @@ def main():
                     if len(os.listdir(args.output_dir)) >= args.save_total_limit:
                         file_name_to_remove = ckpt_prefix + str(sorted([int(i.replace(ckpt_prefix, ''))
                                                                           for i in os.listdir(args.output_dir)])[0])
-                        os.rmdir(os.path.join(args.output_dir, file_name_to_remove))
+                        shutil.rmtree(os.path.join(args.output_dir, file_name_to_remove))
                     unwrapped_model = accelerator.unwrap_model(model)
                     os.makedirs(os.path.join(args.output_dir, ckpt_prefix+str(step + 1)), exist_ok=False)
                     unwrapped_model.save_pretrained(os.path.join(args.output_dir, ckpt_prefix+str(step + 1)),
