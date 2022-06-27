@@ -279,6 +279,11 @@ def parse_args():
         type=float,
         default=0.5,
     )
+    parser.add_argument(
+        "--save_total_limit",
+        type=int,
+        default=3,
+    )
 
     parser.add_argument("--push_to_hub", action="store_true", help="Whether or not to push the model to the Hub.")
     parser.add_argument(
@@ -724,11 +729,18 @@ def main():
                         wandb.log(train_logs)
 
             # save model every `args.saving_steps` steps
+            ckpt_prefix = 'checkpoint-'
             if (step + 1) % (args.gradient_accumulation_steps * args.saving_steps) == 0:
                 if (args.push_to_hub and epoch < args.num_train_epochs - 1) or args.output_dir is not None:
                     accelerator.wait_for_everyone()
+                    if len(os.listdir(args.output_dir)) >= args.save_total_limit:
+                        file_name_to_remove = ckpt_prefix + str(sorted([int(i.replace(ckpt_prefix, ''))
+                                                                          for i in os.listdir(args.output_dir)])[0])
+                        os.remove(args.output_dir, file_name_to_remove)
                     unwrapped_model = accelerator.unwrap_model(model)
-                    unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)
+                    os.makedirs(os.path(args.output_dir, ckpt_prefix+str(step + 1)), exist_ok=False)
+                    unwrapped_model.save_pretrained(os.path(args.output_dir, ckpt_prefix+str(step + 1)),
+                                                    save_function=accelerator.save)
 
                 if (args.push_to_hub and epoch < args.num_train_epochs - 1) and accelerator.is_main_process:
                     repo.push_to_hub(
