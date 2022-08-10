@@ -32,6 +32,8 @@ parser.add_argument('output_dir', help = "The output directory where the model p
 parser.add_argument('train_tsv', help = "Training data. Two-column tab-separated file with 'path' (path to wav file) and 'sentence' (transcription)")
 parser.add_argument('eval_tsv', help = "Evaluation data. Two-column tab-separated file with 'path' (path to wav file) and 'sentence' (transcription)")
 
+parser.add_argument('lr', default=1e-4, help='Learning rate for AdamW optimizer')
+
 parser.add_argument('--use_target_vocab', default=True, help='Use a vocabulary created from target transcriptions (training and evaluation)')
 
 parser.add_argument('--lm_arpa', default=None, help='Path to language model .arpa file (optional)')
@@ -39,6 +41,7 @@ parser.add_argument('--lm_arpa', default=None, help='Path to language model .arp
 parser.add_argument('--hft_logging', default=40, help='HuggingFace Transformers verbosity level (40 = errors, 30 = warnings, 20 = info, 10 = debug)')
 
 args = parser.parse_args()
+print(args)
 
 # Turns out bool('False') evaluates to True in Python (only bool('') is False)
 args.use_target_vocab = False if args.use_target_vocab == 'False' else True
@@ -81,7 +84,6 @@ dataset, vocab_dict = preprocess_text(dataset)
 
 model, processor = configure_w2v2_for_training(dataset, args, vocab_dict, w2v2_config)
 
-
 # Number of trainable parameters
 print(f'Total model parameters: {sum(p.numel() for p in model.parameters())}')
 print(f'Trainable model parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}')
@@ -96,7 +98,7 @@ dataset = process_data(dataset, processor)
 logging.set_verbosity(20)
 
 n_epochs   = 50
-batch_size = 16
+batch_size = 32
 
 # How many epochs between evals?
 eps_b_eval = 5 
@@ -104,13 +106,48 @@ eps_b_eval = 5
 sel_steps  = int(math.ceil(len(dataset['train']) / batch_size) * eps_b_eval)
 
 # Learning rate
-lr = 1e-3
+lr = float(args.lr)
+print(f'Learning rate set to {lr}')
+
+# set-up tri-stage learning rate scheduler
+
+def get_flat_linear_schedule_with_warmup(optimizer, num_warmup_steps:int, num_training_steps:int, last_epoch:int =-1):
+
+    print(f"num training steps: {num_training_steps}")
+    
+    def lr_lambda(current_step):
+        constant_steps = int(num_training_steps * 0.4)
+        warmup_steps = int(num_training_steps * 0.1)
+        
+        if current_step < warmup_steps:
+            return float(current_step) / float(max(1, warmup_steps))
+        elif current_step < warmup_steps+constant_steps:
+            return 1
+        else:
+            return max(
+                0.0, float(num_training_steps - current_step) / float(max(1, num_training_steps - (warmup_steps+constant_steps)))
+            )
+
+    return torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda, last_epoch)
+
+def get_flat_cheduler(name = None, optimizer = None, num_warmup_steps = None, num_training_steps = None):
+    return get_flat_linear_schedule_with_warmup(optimizer, num_warmup_steps=num_warmup_steps, num_training_steps=num_training_steps)
+
+class ReplicationTrainer(Trainer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    def create_flat_scheduler(self, num_training_steps: int):
+        self.lr_scheduler = get_flat_cheduler(optimizer = self.optimizer,
+                                              num_training_steps=num_training_steps)
+    def create_optimizer_and_scheduler(self, num_training_steps):
+        self.create_optimizer()
+        self.create_flat_scheduler(num_training_steps)
 
 training_args = TrainingArguments(
     output_dir=args.output_dir,
     group_by_length=True,
     per_device_train_batch_size=batch_size,
-    gradient_accumulation_steps=2,
+    gradient_accumulation_steps=1,
     evaluation_strategy="steps",
     num_train_epochs=n_epochs,
     fp16=False,
@@ -120,7 +157,7 @@ training_args = TrainingArguments(
     logging_steps=sel_steps,
     learning_rate=lr,
     # Warm up: 100 steps or 10% of total optimisation steps
-    warmup_steps=min(100, int(0.1 * sel_steps * n_epochs)),
+    # warmup_steps=min(100, int(0.1 * sel_steps * n_epochs)),
     # warmup_steps=500,
     # 2022-03-09: manually set optmizier to PyTorch implementation torch.optim.AdamW
     # 'adamw_torch' to get rid of deprecation warning for default optimizer 'adamw_hf'
@@ -132,10 +169,11 @@ training_args = TrainingArguments(
     greater_is_better=False,
     dataloader_num_workers=4,
     report_to = 'wandb',
-    run_name = args.repo_path_or_name.split('/')[-1] + '-' + str(lr) + '-baseline-1h'
+    # run_name = args.repo_path_or_name.split('/')[-1] + '-' + str(lr) + '-tri-stage-baseline'
+    run_name = args.repo_path_or_name + '-' + str(lr) + '-baseline-replicate'
 )
 
-trainer = Trainer(
+trainer = ReplicationTrainer(
     model=model,
     data_collator=DataCollatorCTCWithPadding(processor=processor, padding=True),
     args=training_args,

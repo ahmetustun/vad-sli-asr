@@ -39,19 +39,32 @@ def dataset_from_dict(dataset_dict):
     return dataset
 
 def remove_special_characters(batch):
-    chars_to_ignore_regex = '[\,\.\!\;\:\"\“\%\”\�136]'
+    chars_to_ignore_regex = '[\-\,\.\!\;\:\"\“\%\”\�136]'
     batch["sentence"] = re.sub(chars_to_ignore_regex, '', batch["sentence"])
 
     # for ft on CGN subset
-    batch["sentence"] = re.sub('[Á]', 'A', batch["sentence"])
-    batch["sentence"] = re.sub('[Ä]', 'A', batch["sentence"])
-    batch["sentence"] = re.sub('[Å]', 'A', batch["sentence"])
-    batch["sentence"] = re.sub('[Ç]', 'C', batch["sentence"])
-    batch["sentence"] = re.sub('[Ê]', 'E', batch["sentence"])
-    batch["sentence"] = re.sub('[Ï]', 'I', batch["sentence"])
-    batch["sentence"] = re.sub('[Ô]', 'O', batch["sentence"])
-    batch["sentence"] = re.sub('[Ú]', 'U', batch["sentence"])
-    batch["sentence"] = re.sub('[Ü]', 'U', batch["sentence"])
+    # batch["sentence"] = re.sub('[Á]', 'A', batch["sentence"])
+    # batch["sentence"] = re.sub('[Ä]', 'A', batch["sentence"])
+    # batch["sentence"] = re.sub('[Å]', 'A', batch["sentence"])
+    # batch["sentence"] = re.sub('[Ç]', 'C', batch["sentence"])
+    # batch["sentence"] = re.sub('[Ê]', 'E', batch["sentence"])
+    # batch["sentence"] = re.sub('[Ï]', 'I', batch["sentence"])
+    # batch["sentence"] = re.sub('[Ô]', 'O', batch["sentence"])
+    # batch["sentence"] = re.sub('[Ú]', 'U', batch["sentence"])
+    # batch["sentence"] = re.sub('[Ü]', 'U', batch["sentence"])
+
+    # for ft on Frisian subset
+    batch["sentence"] = re.sub('[á]', 'a', batch["sentence"])
+    batch["sentence"] = re.sub('[à]', 'a', batch["sentence"])
+    batch["sentence"] = re.sub('[ä]', 'a', batch["sentence"])
+    batch["sentence"] = re.sub('[å]', 'a', batch["sentence"])
+    batch["sentence"] = re.sub('[ç]', 'c', batch["sentence"])
+    batch["sentence"] = re.sub('[č]', 'c', batch["sentence"])
+    batch["sentence"] = re.sub('[è]', 'e', batch["sentence"])
+    batch["sentence"] = re.sub('[ë]', 'e', batch["sentence"])
+    batch["sentence"] = re.sub('[ï]', 'i', batch["sentence"])
+    batch["sentence"] = re.sub('[ö]', 'o', batch["sentence"])
+    batch["sentence"] = re.sub('[ü]', 'u', batch["sentence"])
     
     return batch
 
