@@ -747,7 +747,7 @@ def main():
                 if (args.push_to_hub and epoch < args.num_train_epochs - 1) or args.output_dir is not None:
                     accelerator.wait_for_everyone()
                     unwrapped_model = accelerator.unwrap_model(model)
-                    os.makedirs(os.path.join(args.output_dir, ckpt_prefix+str(step + 1)), exist_ok=False)
+                    #os.makedirs(os.path.join(args.output_dir, ckpt_prefix+str(step + 1)), exist_ok=True)
                     unwrapped_model.save_pretrained(os.path.join(args.output_dir, ckpt_prefix+str(step + 1)),
                                                     save_function=accelerator.save)
 
