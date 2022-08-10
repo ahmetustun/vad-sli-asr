@@ -290,6 +290,16 @@ def parse_args():
         type=str,
         default=None,
     )
+    parser.add_argument(
+        "--wandb_project_name",
+        type=str,
+        default="test",
+    )
+    parser.add_argument(
+        "--wandb_run_name",
+        type=str,
+        default="test",
+    )
 
     parser.add_argument("--push_to_hub", action="store_true", help="Whether or not to push the model to the Hub.")
     parser.add_argument(
@@ -427,7 +437,7 @@ def main():
         if is_wandb_available():
             import wandb
 
-            wandb.init(project=args.output_dir.split("/")[-1])
+            wandb.init(project=args.wandb_project_name, name=args.wandb_run_name)
     else:
         datasets.utils.logging.set_verbosity_error()
         transformers.utils.logging.set_verbosity_error()
