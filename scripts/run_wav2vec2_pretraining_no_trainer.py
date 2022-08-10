@@ -734,10 +734,6 @@ def main():
             if (step + 1) % (args.gradient_accumulation_steps * args.saving_steps) == 0:
                 if (args.push_to_hub and epoch < args.num_train_epochs - 1) or args.output_dir is not None:
                     accelerator.wait_for_everyone()
-                    if len(os.listdir(args.output_dir)) >= args.save_total_limit:
-                        file_name_to_remove = ckpt_prefix + str(sorted([int(i.replace(ckpt_prefix, ''))
-                                                                          for i in os.listdir(args.output_dir)])[0])
-                        shutil.rmtree(os.path.join(args.output_dir, file_name_to_remove))
                     unwrapped_model = accelerator.unwrap_model(model)
                     os.makedirs(os.path.join(args.output_dir, ckpt_prefix+str(step + 1)), exist_ok=False)
                     unwrapped_model.save_pretrained(os.path.join(args.output_dir, ckpt_prefix+str(step + 1)),
