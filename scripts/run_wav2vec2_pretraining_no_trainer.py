@@ -285,6 +285,11 @@ def parse_args():
         type=int,
         default=3,
     )
+    parser.add_argument(
+        "--feature_extractor_config",
+        type=str,
+        default=None,
+    )
 
     parser.add_argument("--push_to_hub", action="store_true", help="Whether or not to push the model to the Hub.")
     parser.add_argument(
@@ -478,7 +483,10 @@ def main():
     # Thankfully, `datasets` takes care of automatically loading and resampling the audio,
     # so that we just need to set the correct target sampling rate and normalize the input
     # via the `feature_extractor`
-    feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(args.model_name_or_path)
+    if args.feature_extractor_config is not None:
+        feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(args.feature_extractor_config)
+    else:
+        feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(args.model_name_or_path)
 
     # make sure that dataset decodes audio with correct sampling rate
     raw_datasets = raw_datasets.cast_column(
@@ -542,10 +550,14 @@ def main():
 
     # pretraining is only supported for "newer" stable layer norm architecture
     # apply_spec_augment has to be True, mask_feature_prob has to be 0.0
+
+    # WARNING: Commented out for test
+    '''
     if not config.do_stable_layer_norm or config.feat_extract_norm != "layer":
         raise ValueError(
             "PreTraining is only supported for ``config.do_stable_layer_norm=True`` and ``config.feat_extract_norm='layer'"
         )
+    '''
 
     bottleneck_adapters_kwargs = dict()
     bottleneck_adapters_kwargs['use_bottleneck_adapter'] = args.use_bottleneck_adapter
