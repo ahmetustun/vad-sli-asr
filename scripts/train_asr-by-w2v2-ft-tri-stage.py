@@ -169,8 +169,8 @@ training_args = TrainingArguments(
     greater_is_better=False,
     dataloader_num_workers=4,
     report_to = 'wandb',
-    # run_name = args.repo_path_or_name.split('/')[-1] + '-' + str(lr) + '-tri-stage-baseline'
-    run_name = args.repo_path_or_name + '-' + str(lr) + '-pre-train-frisian'
+    run_name = args.repo_path_or_name.split('/')[-2] + '-ft-' + str(lr)
+    # run_name = args.repo_path_or_name + '-' + str(lr) + '-pre-train-frisian'
 )
 
 trainer = ReplicationTrainer(
