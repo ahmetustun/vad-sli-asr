@@ -72,11 +72,11 @@ w2v2_config = {
         "ctc_loss_reduction" : "mean"
     },
     "bottleneck_adapters_kwargs" : {
-        "use_bottleneck_adapter": False,
+        "use_bottleneck_adapter": True,
         "bottleneck_adapter_dim" : 256,
         "bottleneck_adapter_act" : "gelu",
         "unfreeze_layernorm" : True,
-        "freeze_encoder": True
+        "unfreeze_encoder": True
     }
 }
 
@@ -169,8 +169,8 @@ training_args = TrainingArguments(
     greater_is_better=False,
     dataloader_num_workers=4,
     report_to = 'wandb',
-    # run_name = args.repo_path_or_name.split('/')[-1] + '-' + str(lr) + '-tri-stage-baseline'
-    run_name = args.repo_path_or_name + '-' + str(lr) + '-baseline-replicate'
+    run_name = args.repo_path_or_name.split('/')[-2] + '-ft-' + str(lr)
+    # run_name = args.repo_path_or_name + '-' + str(lr) + '-pre-train-frisian'
 )
 
 trainer = ReplicationTrainer(
