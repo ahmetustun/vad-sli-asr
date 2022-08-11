@@ -733,6 +733,7 @@ def main():
                     percent_masked = accelerator.gather(percent_masked).sum()
 
                 train_logs = {
+                    "steps": step + 1,
                     "loss": (loss * args.gradient_accumulation_steps) / num_losses,
                     "constrast_loss": outputs.contrastive_loss / num_losses,
                     "div_loss": outputs.diversity_loss / num_losses,
