@@ -721,7 +721,7 @@ def main():
                 completed_steps += 1
 
             # 6. Log all results
-            if (step + 1) % (args.gradient_accumulation_steps * args.logging_steps) == 0:
+            if completed_steps % args.logging_steps == 0:
                 loss.detach()
                 outputs.contrastive_loss.detach()
                 outputs.diversity_loss.detach()
@@ -733,7 +733,7 @@ def main():
                     percent_masked = accelerator.gather(percent_masked).sum()
 
                 train_logs = {
-                    "steps": torch.tensor(step + 1),
+                    "completed_steps": torch.tensor(completed_steps),
                     "loss": (loss * args.gradient_accumulation_steps) / num_losses,
                     "constrast_loss": outputs.contrastive_loss / num_losses,
                     "div_loss": outputs.diversity_loss / num_losses,
@@ -754,7 +754,7 @@ def main():
 
             # save model every `args.saving_steps` steps
             ckpt_prefix = 'checkpoint-'
-            if (step + 1) % (args.gradient_accumulation_steps * args.saving_steps) == 0:
+            if completed_steps % args.saving_steps == 0:
                 if (args.push_to_hub and epoch < args.num_train_epochs - 1) or args.output_dir is not None:
                     accelerator.wait_for_everyone()
                     unwrapped_model = accelerator.unwrap_model(model)
