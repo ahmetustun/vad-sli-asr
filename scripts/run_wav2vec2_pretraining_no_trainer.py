@@ -721,7 +721,7 @@ def main():
                 completed_steps += 1
 
             # 6. Log all results
-            if completed_steps % args.logging_steps == 0:
+            if completed_steps != 0 and completed_steps % args.logging_steps == 0:
                 loss.detach()
                 outputs.contrastive_loss.detach()
                 outputs.diversity_loss.detach()
@@ -754,7 +754,7 @@ def main():
 
             # save model every `args.saving_steps` steps
             ckpt_prefix = 'checkpoint-'
-            if completed_steps % args.saving_steps == 0:
+            if completed_steps != 0 and completed_steps % args.saving_steps == 0:
                 if (args.push_to_hub and epoch < args.num_train_epochs - 1) or args.output_dir is not None:
                     accelerator.wait_for_everyone()
                     unwrapped_model = accelerator.unwrap_model(model)
