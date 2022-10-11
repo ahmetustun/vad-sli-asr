@@ -1,90 +1,98 @@
 import os
+import numpy as np
 import pandas as pd
 import torchaudio
+import re
+import torch
+import librosa
 
 from datasets import Dataset
 from helpers.asr import configure_w2v2_for_inference
 from jiwer import wer, cer
 
+from transformers import (
+    AutoProcessor,
+    Wav2Vec2ForCTC
+)
+
+from datasets import (
+    Dataset
+)
+
+from glob import glob
+
 EVAL_MODELS_DATASETS = [
-    # Evaluation on the same test set using model trained using different amounts of data
-    # ("data/exps/asr/checkpoints/train-100", "data/exps/asr/datasets/test.tsv"),
-    # ("data/exps/asr/checkpoints/train-80", "data/exps/asr/datasets/test.tsv"),
-    # ("data/exps/asr/checkpoints/train-60", "data/exps/asr/datasets/test.tsv"),
-    # ("data/exps/asr/checkpoints/train-40", "data/exps/asr/datasets/test.tsv"),
-    # ("data/exps/asr/checkpoints/train-20", "data/exps/asr/datasets/test.tsv"),
-    # ("data/exps/asr/checkpoints/train-10", "data/exps/asr/datasets/test.tsv"),
-    # ("data/exps/asr/checkpoints/train-05", "data/exps/asr/datasets/test.tsv"),
-    # ("data/exps/asr/checkpoints/train-01", "data/exps/asr/datasets/test.tsv"),
-    # Baseline model with no additional fine-tuning
-    # ("facebook/wav2vec2-large-robust-ft-swbd-300h", "data/exps/asr/datasets/test.tsv"),
-
-    # Cross-validation on 10 different train-test splits with models trained using only
-    # 60% of training split and no language model
-    # ("data/exps/asr/checkpoints/bootstrap/no-lm/b-1", "data/exps/asr/datasets/bootstrap-1-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/no-lm/b-2", "data/exps/asr/datasets/bootstrap-2-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/no-lm/b-3", "data/exps/asr/datasets/bootstrap-3-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/no-lm/b-4", "data/exps/asr/datasets/bootstrap-4-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/no-lm/b-5", "data/exps/asr/datasets/bootstrap-5-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/no-lm/b-6", "data/exps/asr/datasets/bootstrap-6-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/no-lm/b-7", "data/exps/asr/datasets/bootstrap-7-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/no-lm/b-8", "data/exps/asr/datasets/bootstrap-8-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/no-lm/b-9", "data/exps/asr/datasets/bootstrap-9-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/no-lm/b-10", "data/exps/asr/datasets/bootstrap-10-test20.tsv"),
-
-    # Cross-validation on 10 different train-test splits with models trained using only
-    # 60% of training split and a 2-gram language model
-    # ("data/exps/asr/checkpoints/bootstrap/lm/b-1", "data/exps/asr/datasets/bootstrap-1-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/lm/b-2", "data/exps/asr/datasets/bootstrap-2-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/lm/b-3", "data/exps/asr/datasets/bootstrap-3-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/lm/b-4", "data/exps/asr/datasets/bootstrap-4-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/lm/b-5", "data/exps/asr/datasets/bootstrap-5-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/lm/b-6", "data/exps/asr/datasets/bootstrap-6-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/lm/b-7", "data/exps/asr/datasets/bootstrap-7-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/lm/b-8", "data/exps/asr/datasets/bootstrap-8-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/lm/b-9", "data/exps/asr/datasets/bootstrap-9-test20.tsv"),
-    # ("data/exps/asr/checkpoints/bootstrap/lm/b-10", "data/exps/asr/datasets/bootstrap-10-test20.tsv")
-
-    # Baseline model with no additional fine-tuning
-    # ("facebook/wav2vec2-large-robust-ft-swbd-300h", "data/exps/asr/datasets/bootstrap-1-test20.tsv"),
-    # ("facebook/wav2vec2-large-robust-ft-swbd-300h", "data/exps/asr/datasets/bootstrap-2-test20.tsv"),
-    # ("facebook/wav2vec2-large-robust-ft-swbd-300h", "data/exps/asr/datasets/bootstrap-3-test20.tsv"),
-    # ("facebook/wav2vec2-large-robust-ft-swbd-300h", "data/exps/asr/datasets/bootstrap-4-test20.tsv"),
-    # ("facebook/wav2vec2-large-robust-ft-swbd-300h", "data/exps/asr/datasets/bootstrap-5-test20.tsv"),
-    # ("facebook/wav2vec2-large-robust-ft-swbd-300h", "data/exps/asr/datasets/bootstrap-6-test20.tsv"),
-    # ("facebook/wav2vec2-large-robust-ft-swbd-300h", "data/exps/asr/datasets/bootstrap-7-test20.tsv"),
-    # ("facebook/wav2vec2-large-robust-ft-swbd-300h", "data/exps/asr/datasets/bootstrap-8-test20.tsv"),
-    # ("facebook/wav2vec2-large-robust-ft-swbd-300h", "data/exps/asr/datasets/bootstrap-9-test20.tsv"),
-    # ("facebook/wav2vec2-large-robust-ft-swbd-300h", "data/exps/asr/datasets/bootstrap-10-test20.tsv")
-
-    # Frisian data
-    ("/data3/p280965/adapters/vad-sli-asr/data/frisian-ft/checkpoints/facebook/wav2vec2-xls-r-300m-1e-4-baseline", "data/frisian-ft/dev.tsv"),
-    ("/data3/p280965/adapters/vad-sli-asr/data/frisian-ft/checkpoints/facebook/wav2vec2-xls-r-300m-1e-4-baseline", "data/frisian-ft/test.tsv")
+    # Frisian data: baselines DEV
+    ("/checkpoints/baselines/GroNLP/wav2vec2-dutch-large-5e-5-baseline", "data/frisian-ft/dev.tsv"),
+    ("/checkpoints/baselines/facebook/wav2vec2-large-5e-5-baseline", "data/frisian-ft/dev.tsv")
 ]
 
+def speech_file_to_array_fn(batch):
+    speech_array, _ = librosa.load(batch["path"], sr=16_000)
+    batch["speech"] = speech_array
+    
+    return batch
+
+def remove_special_characters(batch):
+    chars_to_ignore_regex = '[\-\,\.\!\;\:\"\“\%\”\�136]'
+    batch["sentence"] = re.sub(chars_to_ignore_regex, '', batch["sentence"])
+
+    # for ft on Frisian subset
+    batch["sentence"] = re.sub('[á]', 'a', batch["sentence"])
+    batch["sentence"] = re.sub('[à]', 'a', batch["sentence"])
+    batch["sentence"] = re.sub('[ä]', 'a', batch["sentence"])
+    batch["sentence"] = re.sub('[å]', 'a', batch["sentence"])
+    batch["sentence"] = re.sub('[ç]', 'c', batch["sentence"])
+    batch["sentence"] = re.sub('[č]', 'c', batch["sentence"])
+    batch["sentence"] = re.sub('[è]', 'e', batch["sentence"])
+    batch["sentence"] = re.sub('[ë]', 'e', batch["sentence"])
+    batch["sentence"] = re.sub('[ï]', 'i', batch["sentence"])
+    batch["sentence"] = re.sub('[ö]', 'o', batch["sentence"])
+    batch["sentence"] = re.sub('[ü]', 'u', batch["sentence"])
+
+    batch["transcription"] = re.sub(chars_to_ignore_regex, '', batch["transcription"])
+
+    # for ft on Frisian subset
+    batch["transcription"] = re.sub('[á]', 'a', batch["transcription"])
+    batch["transcription"] = re.sub('[à]', 'a', batch["transcription"])
+    batch["transcription"] = re.sub('[ä]', 'a', batch["transcription"])
+    batch["transcription"] = re.sub('[å]', 'a', batch["transcription"])
+    batch["transcription"] = re.sub('[ç]', 'c', batch["transcription"])
+    batch["transcription"] = re.sub('[č]', 'c', batch["transcription"])
+    batch["transcription"] = re.sub('[è]', 'e', batch["transcription"])
+    batch["transcription"] = re.sub('[ë]', 'e', batch["transcription"])
+    batch["transcription"] = re.sub('[ï]', 'i', batch["transcription"])
+    batch["transcription"] = re.sub('[ö]', 'o', batch["transcription"])
+    batch["transcription"] = re.sub('[ü]', 'u', batch["transcription"])
+    
+    return batch
+
+
+def evaluate(batch):
+    inputs = processor(batch["speech"], sampling_rate=16_000, return_tensors="pt", padding=True)
+
+    with torch.no_grad():
+        logits = model(inputs.input_values.to("cuda"), attention_mask=inputs.attention_mask.to("cuda")).logits
+
+    pred_ids = torch.argmax(logits, dim=-1)
+    batch["transcription"] = processor.batch_decode(pred_ids)
+    
+    return batch
+
 EVAL_RESULTS = []
-
-def read_clip(batch):
-    batch['speech'] = torchaudio.load(batch['path'])[0]
-    return batch
-
-def make_all_lowercase(batch):
-    batch["sentence"] = batch["sentence"].lower()
-    batch["transcription"] = batch["transcription"].lower()
-
-    return batch
-
 for model_path, testset_path in EVAL_MODELS_DATASETS:
 
     print(f"Reading in data from {testset_path} ...")
     test_ds = Dataset.from_pandas(pd.read_csv(testset_path, sep = '\t'))
-    test_ds = test_ds.map(read_clip)
+    test_ds = test_ds.map(speech_file_to_array_fn)
 
-    _, processor, transcribe_speech = configure_w2v2_for_inference(model_path)
+    cp_path = glob(os.path.join(model_path, 'checkpoint-*'))[0]
+    model = Wav2Vec2ForCTC.from_pretrained(cp_path)
+    model = model.cuda()
+    processor = AutoProcessor.from_pretrained(model_path)
 
-    print(f"Obtaining predictions using model from {model_path} ...")
-    test_ds = test_ds.map(transcribe_speech, remove_columns=["speech"])
-    test_ds = test_ds.map(make_all_lowercase)
+    test_ds = test_ds.map(evaluate, batched=True, batch_size=8)
+    test_ds = test_ds.map(remove_special_characters)
 
     EVAL_RESULTS.append({
         "model" : os.path.basename(model_path),
@@ -96,6 +104,6 @@ for model_path, testset_path in EVAL_MODELS_DATASETS:
 
 results_df = pd.DataFrame(EVAL_RESULTS)
 print(results_df)
-# results_df.to_csv("data/exps/asr/asr_wer-csr.csv", index=False)
 
-# print("Results written to data/exps/asr/asr_wer-csr.csv")
+results_df.to_csv("data/exps-eval/asr/asr_wer-csr.csv", index=False)
+print("Results written to data/exps-eval/asr/asr_wer-csr.csv")
