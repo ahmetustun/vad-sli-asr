@@ -620,7 +620,7 @@ def main():
     if args.use_bottleneck_adapter:
         model.unfreeze_bottleneck_adapters()
     if args.use_cnn_adapter:
-        model.unfree_cnn_adapters()
+        model.unfreeze_cnn_adapters()
 
     # Number of trainable parameters
     print(f'Total model parameters: {sum(p.numel() for p in model.parameters())}')
