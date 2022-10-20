@@ -259,6 +259,12 @@ class Wav2Vec2Config(PretrainedConfig):
         bottleneck_adapter_act="gelu",
         unfreeze_encoder=False,
         unfreeze_layernorm=False,
+        use_cnn_adapter=False,
+        cnn_adapter_in_conv_dim=512,
+        cnn_adapter_out_conv_dim=512,
+        cnn_adapter_kernel=1,
+        cnn_adapter_stride=1,
+        cnn_adapter_do_norm=False,
         **kwargs
     ):
         super().__init__(**kwargs, pad_token_id=pad_token_id, bos_token_id=bos_token_id, eos_token_id=eos_token_id)
@@ -288,11 +294,20 @@ class Wav2Vec2Config(PretrainedConfig):
         self.do_stable_layer_norm = do_stable_layer_norm
         self.use_weighted_layer_sum = use_weighted_layer_sum
 
+        # config for transformer adapters
         self.use_bottleneck_adapter = use_bottleneck_adapter
         self.bottleneck_adapter_dim = bottleneck_adapter_dim
         self.bottleneck_adapter_act = bottleneck_adapter_act
         self.unfreeze_encoder = unfreeze_encoder
         self.unfreeze_layernorm = unfreeze_layernorm
+
+        # config for cnn adapters
+        self.use_cnn_adapter = use_cnn_adapter
+        self.cnn_adapter_in_conv_dim = cnn_adapter_in_conv_dim
+        self.cnn_adapter_out_conv_dim = cnn_adapter_out_conv_dim
+        self.cnn_adapter_kernel = cnn_adapter_kernel
+        self.cnn_adapter_stride = cnn_adapter_stride
+        self.cnn_adapter_do_norm = cnn_adapter_do_norm
 
         if (
             (len(self.conv_stride) != self.num_feat_extract_layers)

@@ -77,6 +77,12 @@ w2v2_config = {
         "bottleneck_adapter_act" : "gelu",
         "unfreeze_layernorm" : True,
         "unfreeze_encoder": True
+    },
+    "cnn_adapters_kwargs": {
+        "use_cnn_adapter": True,
+        "cnn_adapter_do_norm": True,
+        "cnn_adapter_kernel": 1,
+        "cnn_adapter_stride": 1
     }
 }
 

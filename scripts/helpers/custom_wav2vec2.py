@@ -25,7 +25,7 @@ import torch.utils.checkpoint
 from torch import nn
 from torch.nn import CrossEntropyLoss
 
-from .adapter import Adapter
+from .adapter import Adapter, CnnAdapter
 from transformers.activations import ACT2FN
 from transformers.deepspeed import is_deepspeed_zero3_enabled
 from transformers.file_utils import (
@@ -361,9 +361,14 @@ class Wav2Vec2NoLayerNormConvLayer(nn.Module):
             bias=config.conv_bias,
         )
         self.activation = ACT2FN[config.feat_extract_activation]
+        self.use_cnn_adapter = config.use_cnn_adapter
+        if self.use_cnn_adapter:
+            self.cnn_adapter = CnnAdapter(config)
 
     def forward(self, hidden_states):
         hidden_states = self.conv(hidden_states)
+        if self.use_cnn_adapter:
+            hidden_states = self.cnn_adapter(hidden_states)
         hidden_states = self.activation(hidden_states)
         return hidden_states
 
@@ -384,8 +389,14 @@ class Wav2Vec2LayerNormConvLayer(nn.Module):
         self.layer_norm = nn.LayerNorm(self.out_conv_dim, elementwise_affine=True)
         self.activation = ACT2FN[config.feat_extract_activation]
 
+        self.use_cnn_adapter = config.use_cnn_adapter
+        if self.use_cnn_adapter:
+            self.cnn_adapter = CnnAdapter(config)
+
     def forward(self, hidden_states):
         hidden_states = self.conv(hidden_states)
+        if self.use_cnn_adapter:
+            hidden_states = self.cnn_adapter(hidden_states)
 
         hidden_states = hidden_states.transpose(-2, -1)
         hidden_states = self.layer_norm(hidden_states)
@@ -411,9 +422,14 @@ class Wav2Vec2GroupNormConvLayer(nn.Module):
         self.activation = ACT2FN[config.feat_extract_activation]
 
         self.layer_norm = nn.GroupNorm(num_groups=self.out_conv_dim, num_channels=self.out_conv_dim, affine=True)
+        self.use_cnn_adapter = config.use_cnn_adapter
+        if self.use_cnn_adapter:
+            self.cnn_adapter = CnnAdapter(config)
 
     def forward(self, hidden_states):
         hidden_states = self.conv(hidden_states)
+        if self.use_cnn_adapter:
+            hidden_states = self.cnn_adapter(hidden_states)
         hidden_states = self.layer_norm(hidden_states)
         hidden_states = self.activation(hidden_states)
         return hidden_states
@@ -1425,6 +1441,9 @@ class Wav2Vec2ForPreTraining(Wav2Vec2PreTrainedModel):
         self.unfreeze_layernorm = config.unfreeze_layernorm
         self.unfreeze_encoder = config.unfreeze_encoder
 
+        # cnn adapter configs
+        self.use_cnn_adapter = config.use_cnn_adapter
+
     def set_gumbel_temperature(self, temperature: int):
         """
         Set the Gumbel softmax temperature to a given value. Only necessary for training
@@ -1459,6 +1478,14 @@ class Wav2Vec2ForPreTraining(Wav2Vec2PreTrainedModel):
                     param.requires_grad = True
                 elif not self.unfreeze_encoder:
                     param.requires_grad = False
+
+    def unfreeze_cnn_adapters(self):
+        if self.use_cnn_adapter:
+            for name, param in self.wav2vec2.feature_extractor.named_parameters():
+                if 'cnn_adapter' in name:
+                    param.requires_grad = True
+                elif self.unfreeze_layernorm and 'layer_norm' in name:
+                    param.requires_grad = True
 
     @staticmethod
     def compute_contrastive_logits(
@@ -1738,9 +1765,13 @@ class Wav2Vec2ForCTC(Wav2Vec2PreTrainedModel):
         # Initialize weights and apply final processing
         self.post_init()
 
+        # bottleneck adapter configs
         self.use_bottleneck_adapter = config.use_bottleneck_adapter
         self.unfreeze_layernorm = config.unfreeze_layernorm
         self.unfreeze_encoder = config.unfreeze_encoder
+
+        # cnn adapter configs
+        self.use_cnn_adapter = config.use_cnn_adapter
 
     def freeze_feature_extractor(self):
         """
@@ -1770,6 +1801,14 @@ class Wav2Vec2ForCTC(Wav2Vec2PreTrainedModel):
                     param.requires_grad = True
                 elif not self.unfreeze_encoder:
                     param.requires_grad = False
+
+    def unfreeze_cnn_adapters(self):
+        if self.use_cnn_adapter:
+            for name, param in self.wav2vec2.feature_extractor.named_parameters():
+                if 'cnn_adapter' in name:
+                    param.requires_grad = True
+                elif self.unfreeze_layernorm and 'layer_norm' in name:
+                    param.requires_grad = True
 
     @add_start_docstrings_to_model_forward(WAV_2_VEC_2_INPUTS_DOCSTRING)
     @add_code_sample_docstrings(

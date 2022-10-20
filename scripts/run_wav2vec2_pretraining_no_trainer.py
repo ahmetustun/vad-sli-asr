@@ -301,6 +301,34 @@ def parse_args():
         default="test",
     )
 
+    parser.add_argument(
+        "--use_cnn_adapter",
+        action="store_true",
+        default=False,
+        help="Flag for cnn adapters",
+    )
+
+    parser.add_argument(
+        "--cnn_adapter_do_norm",
+        action="store_true",
+        default=True,
+        help="Flag for layer norm in cnn adapters",
+    )
+
+    parser.add_argument(
+        "--cnn_adapter_kernel",
+        type=int,
+        default=1,
+        help="Kernel size for cnn adapters",
+    )
+
+    parser.add_argument(
+        "--cnn_adapter_stride",
+        type=int,
+        default=1,
+        help="Stride size for cnn adapters",
+    )
+
     parser.add_argument("--push_to_hub", action="store_true", help="Whether or not to push the model to the Hub.")
     parser.add_argument(
         "--hub_model_id", type=str, help="The name of the repository to keep in sync with the local `output_dir`."
@@ -561,31 +589,38 @@ def main():
     # pretraining is only supported for "newer" stable layer norm architecture
     # apply_spec_augment has to be True, mask_feature_prob has to be 0.0
 
-    # WARNING: Commented out for test
-    '''
     if not config.do_stable_layer_norm or config.feat_extract_norm != "layer":
         raise ValueError(
             "PreTraining is only supported for ``config.do_stable_layer_norm=True`` and ``config.feat_extract_norm='layer'"
         )
-    '''
 
-    bottleneck_adapters_kwargs = dict()
-    bottleneck_adapters_kwargs['use_bottleneck_adapter'] = args.use_bottleneck_adapter
-    bottleneck_adapters_kwargs['bottleneck_adapter_dim'] = args.bottleneck_adapter_dim
-    bottleneck_adapters_kwargs['bottleneck_adapter_act'] = args.bottleneck_adapter_act
-    bottleneck_adapters_kwargs['unfreeze_encoder'] = args.unfreeze_encoder
-    bottleneck_adapters_kwargs['unfreeze_layernorm'] = args.unfreeze_layernorm
+    additional_adapters_kwargs = dict()
+
+    # transformer adapters
+    additional_adapters_kwargs['use_bottleneck_adapter'] = args.use_bottleneck_adapter
+    additional_adapters_kwargs['bottleneck_adapter_dim'] = args.bottleneck_adapter_dim
+    additional_adapters_kwargs['bottleneck_adapter_act'] = args.bottleneck_adapter_act
+    additional_adapters_kwargs['unfreeze_encoder'] = args.unfreeze_encoder
+    additional_adapters_kwargs['unfreeze_layernorm'] = args.unfreeze_layernorm
 
     # additional mask_time_prob
-    bottleneck_adapters_kwargs['mask_time_prob'] = args.mask_time_prob
+    additional_adapters_kwargs['mask_time_prob'] = args.mask_time_prob
+
+    # cnn adapters
+    additional_adapters_kwargs['use_cnn_adapter'] = args.use_cnn_adapter
+    additional_adapters_kwargs['cnn_adapter_do_norm'] = args.cnn_adapter_do_norm
+    additional_adapters_kwargs['cnn_adapter_kernel'] = args.cnn_adapter_kernel
+    additional_adapters_kwargs['cnn_adapter_stride'] = args.cnn_adapter_stride
 
     # initialize random model
-    model = Wav2Vec2ForPreTraining.from_pretrained(args.model_name_or_path, **bottleneck_adapters_kwargs)
+    model = Wav2Vec2ForPreTraining.from_pretrained(args.model_name_or_path, **additional_adapters_kwargs)
 
     if args.freeze_feature_encoder:
         model.freeze_feature_encoder()
     if args.use_bottleneck_adapter:
         model.unfreeze_bottleneck_adapters()
+    if args.use_cnn_adapter:
+        model.unfree_cnn_adapters()
 
     # Number of trainable parameters
     print(f'Total model parameters: {sum(p.numel() for p in model.parameters())}')
